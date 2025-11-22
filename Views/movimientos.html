@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Movimientos</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; }
+    h1 { text-align: center; }
+    input, select, button { margin: 5px; padding: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f4f4f4; }
+  </style>
+</head>
+<body>
+  <h1>Movimientos</h1>
+
+  <h2>Crear/Actualizar Movimiento</h2>
+  <form id="movimientoForm">
+    <input type="hidden" id="idMovimiento">
+    <input type="number" id="idUsuario" placeholder="ID Usuario" required>
+    <select id="tipo" required>
+      <option value="">Seleccionar Tipo</option>
+      <option value="Ingreso">Ingreso</option>
+      <option value="Egreso">Egreso</option>
+    </select>
+    <input type="number" id="monto" placeholder="Monto" required>
+    <button type="submit">Guardar</button>
+  </form>
+
+  <h2>Lista de Movimientos</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>ID Usuario</th>
+        <th>Tipo</th>
+        <th>Monto</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="movimientosTable"></tbody>
+  </table>
+
+  <script>
+    const apiUrl = '/api/movimientos';
+
+    async function listarMovimientos() {
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      const tbody = document.getElementById('movimientosTable');
+      tbody.innerHTML = '';
+      data.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${m.ID_MOVIMIENTO}</td>
+          <td>${m.ID_USUARIO}</td>
+          <td>${m.TIPO}</td>
+          <td>${m.MONTO}</td>
+          <td>
+            <button onclick="editarMovimiento(${m.ID_MOVIMIENTO}, ${m.ID_USUARIO}, '${m.TIPO}', ${m.MONTO})">Editar</button>
+            <button onclick="eliminarMovimiento(${m.ID_MOVIMIENTO})">Eliminar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function crearMovimiento(movimiento) {
+      await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(movimiento)
+      });
+      listarMovimientos();
+    }
+
+    async function actualizarMovimiento(id, movimiento) {
+      await fetch(`${apiUrl}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(movimiento)
+      });
+      listarMovimientos();
+    }
+
+    async function eliminarMovimiento(id) {
+      if(confirm('¿Seguro que deseas eliminar este movimiento?')) {
+        await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+        listarMovimientos();
+      }
+    }
+
+    function editarMovimiento(id, idUsuario, tipo, monto) {
+      document.getElementById('idMovimiento').value = id;
+      document.getElementById('idUsuario').value = idUsuario;
+      document.getElementById('tipo').value = tipo;
+      document.getElementById('monto').value = monto;
+    }
+
+    document.getElementById('movimientoForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const id = document.getElementById('idMovimiento').value;
+      const movimiento = {
+        id_usuario: parseInt(document.getElementById('idUsuario').value),
+        tipo: document.getElementById('tipo').value,
+        monto: parseFloat(document.getElementById('monto').value)
+      };
+      if(id) {
+        actualizarMovimiento(id, movimiento);
+      } else {
+        crearMovimiento(movimiento);
+      }
+      e.target.reset();
+      document.getElementById('idMovimiento').value = '';
+    });
+
+    // Listar movimientos al cargar la página
+    listarMovimientos();
+  </script>
+</body>
+</html>

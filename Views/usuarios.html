@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Usuarios</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* centra todo horizontalmente */
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+  }
+
+  h1, h2 {
+    text-align: center;
+  }
+
+  form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    gap: 10px;
+  }
+
+  input, select, button {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+  }
+
+  button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  button:hover {
+    background-color: #45a049;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 80%;
+    max-width: 800px;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  th, td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+  }
+
+  th {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  td button {
+    background-color: #f44336;
+    padding: 5px 10px;
+  }
+
+  td button:hover {
+    background-color: #d32f2f;
+  }
+</style>
+</head>
+<body>
+
+<h1>Gestión de Usuarios</h1>
+
+<h2>Agregar Usuario</h2>
+<form id="formAgregar">
+  <input type="text" name="nombre" placeholder="Nombre" required>
+  <input type="text" name="apellido" placeholder="Apellido" required>
+  <input type="email" name="correo" placeholder="Correo" required>
+  <select name="rol" required>
+    <option value="">Selecciona rol</option>
+    <option value="Usuario">Usuario</option>
+    <option value="Administrador">Administrador</option>
+  </select>
+  <button type="submit">Agregar</button>
+</form>
+
+<h2>Lista de Usuarios</h2>
+<table id="tablaUsuarios">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nombre</th>
+      <th>Apellido</th>
+      <th>Correo</th>
+      <th>Rol</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+const tabla = document.querySelector("#tablaUsuarios tbody");
+const form = document.getElementById("formAgregar");
+
+// Listar usuarios
+async function listarUsuarios() {
+  try {
+    const res = await fetch("/api/usuarios");
+    const data = await res.json();
+    tabla.innerHTML = "";
+    data.forEach(u => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${u.ID_USUARIO}</td>
+        <td>${u.NOMBRE}</td>
+        <td>${u.APELLIDO}</td>
+        <td>${u.CORREO}</td>
+        <td>${u.ROL}</td>
+        <td>
+          <button onclick="borrarUsuario(${u.ID_USUARIO})">Eliminar</button>
+        </td>
+      `;
+      tabla.appendChild(tr);
+    });
+  } catch (err) {
+    alert("Error al cargar usuarios: " + err.message);
+  }
+}
+
+// Agregar usuario
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const formData = new FormData(form);
+  const usuario = Object.fromEntries(formData.entries());
+
+  try {
+    const res = await fetch("/api/usuarios", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(usuario)
+    });
+    const data = await res.json();
+    if (data.msg) alert(data.msg);
+    if (data.error) alert(data.error);
+    form.reset();
+    listarUsuarios();
+  } catch (err) {
+    alert("Error al agregar usuario: " + err.message);
+  }
+});
+
+// Borrar usuario
+async function borrarUsuario(id) {
+  if (!confirm("¿Seguro quieres eliminar este usuario?")) return;
+
+  try {
+    const res = await fetch(`/api/usuarios/${id}`, { method: "DELETE" });
+    const data = await res.json();
+    if (data.msg) alert(data.msg);
+    listarUsuarios();
+  } catch (err) {
+    alert("Error al borrar usuario: " + err.message);
+  }
+}
+
+// Inicializar tabla
+listarUsuarios();
+</script>
+</body>
+</html>
