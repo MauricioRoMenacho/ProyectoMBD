@@ -2,10 +2,355 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Trámites</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Trámites</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .btn-delete {
+            background-color: #f44336;
+        }
+        .btn-delete:hover {
+            background-color: #da190b;
+        }
+        .btn-edit {
+            background-color: #ff9800;
+        }
+        .btn-edit:hover {
+            background-color: #e68900;
+        }
+        nav {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            margin: 0 5px;
+        }
+        nav a:hover {
+            background-color: #555;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .estado-en-proceso {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        .estado-finalizado {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .estado-pendiente {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .form-section {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Página de Trámites</h1>
-    <p>Contenido de trámites aquí.</p>
+    <nav>
+        <a href="/usuarios">Usuarios</a>
+        <a href="/tramites">Trámites</a>
+        <a href="/movimientos">Movimientos</a>
+    </nav>
+
+    <div class="container">
+        <h1>Gestión de Trámites</h1>
+        
+        <div class="form-section">
+            <h2 id="form-title">Nuevo Trámite</h2>
+            <form id="form-tramite">
+                <input type="hidden" id="tramite-id">
+                
+                <div class="form-group">
+                    <label for="codigo">Código del Trámite:</label>
+                    <input type="text" id="codigo" placeholder="TR-XXX" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_usuario">Usuario:</label>
+                    <select id="id_usuario" required>
+                        <option value="">Seleccione un usuario...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_tipo">Tipo de Documento:</label>
+                    <select id="id_tipo" required>
+                        <option value="">Seleccione tipo de documento...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_area">Área Origen:</label>
+                    <select id="id_area" required>
+                        <option value="">Seleccione un área...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_area_destino">Área Destino:</label>
+                    <select id="id_area_destino" required>
+                        <option value="">Seleccione un área...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="estado">Estado:</label>
+                    <select id="estado" required>
+                        <option value="">Seleccione estado...</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En proceso">En proceso</option>
+                        <option value="Finalizado">Finalizado</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="observacion">Observación:</label>
+                    <textarea id="observacion" rows="3" placeholder="Observaciones del trámite"></textarea>
+                </div>
+
+                <button type="submit" id="btn-submit">Crear Trámite</button>
+                <button type="button" onclick="cancelarEdicion()" id="btn-cancel" style="display:none; background-color:#757575;">Cancelar</button>
+            </form>
+        </div>
+
+        <h2>Lista de Trámites</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Código</th>
+                    <th>Fecha Registro</th>
+                    <th>Usuario</th>
+                    <th>Tipo Documento</th>
+                    <th>Área</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tramites-body">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let editandoId = null;
+
+        // Cargar catálogos al inicio
+        async function cargarCatalogos() {
+            try {
+                // Cargar usuarios
+                const usuarios = await fetch('/api/tramites/catalogo/usuarios').then(r => r.json());
+                const selectUsuario = document.getElementById('id_usuario');
+                selectUsuario.innerHTML = '<option value="">Seleccione un usuario...</option>' +
+                    usuarios.map(u => `<option value="${u.ID_USUARIO}">${u.NOMBRE} ${u.APELLIDO}</option>`).join('');
+
+                // Cargar tipos de documento
+                const tipos = await fetch('/api/tramites/catalogo/tipos').then(r => r.json());
+                const selectTipo = document.getElementById('id_tipo');
+                selectTipo.innerHTML = '<option value="">Seleccione tipo de documento...</option>' +
+                    tipos.map(t => `<option value="${t.ID_TIPO}">${t.NOMBRE_TIPO}</option>`).join('');
+
+                // Cargar áreas
+                const areas = await fetch('/api/tramites/catalogo/areas').then(r => r.json());
+                const selectArea = document.getElementById('id_area');
+                const selectAreaDestino = document.getElementById('id_area_destino');
+                
+                const areasHTML = areas.map(a => `<option value="${a.ID_AREA}">${a.NOMBRE_AREA}</option>`).join('');
+                selectArea.innerHTML = '<option value="">Seleccione un área...</option>' + areasHTML;
+                selectAreaDestino.innerHTML = '<option value="">Seleccione un área...</option>' + areasHTML;
+            } catch (error) {
+                console.error('Error al cargar catálogos:', error);
+            }
+        }
+
+        // Cargar lista de trámites
+        async function cargarTramites() {
+            try {
+                const response = await fetch('/api/tramites');
+                const tramites = await response.json();
+                
+                const tbody = document.getElementById('tramites-body');
+                
+                if (tramites.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center">No hay trámites registrados</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = tramites.map(t => {
+                    const fecha = new Date(t.FECHA_REGISTRO).toLocaleDateString('es-PE');
+                    const estadoClass = t.ESTADO.toLowerCase().replace(' ', '-');
+                    
+                    return `
+                        <tr>
+                            <td>${t.ID_TRAMITE}</td>
+                            <td><strong>${t.CODIGO}</strong></td>
+                            <td>${fecha}</td>
+                            <td>${t.USUARIO}</td>
+                            <td>${t.TIPO_DOCUMENTO}</td>
+                            <td>${t.AREA}</td>
+                            <td class="estado-${estadoClass}">${t.ESTADO}</td>
+                            <td>
+                                <button onclick="editarTramite(${t.ID_TRAMITE})" class="btn-edit">Editar</button>
+                                <button onclick="eliminarTramite(${t.ID_TRAMITE})" class="btn-delete">Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error al cargar trámites:', error);
+            }
+        }
+
+        // Crear o actualizar trámite
+        document.getElementById('form-tramite').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const tramite = {
+                codigo: document.getElementById('codigo').value,
+                estado: document.getElementById('estado').value,
+                id_usuario: parseInt(document.getElementById('id_usuario').value),
+                id_tipo: parseInt(document.getElementById('id_tipo').value),
+                id_area: parseInt(document.getElementById('id_area').value),
+                id_area_destino: parseInt(document.getElementById('id_area_destino').value),
+                observacion: document.getElementById('observacion').value
+            };
+            
+            try {
+                let response;
+                if (editandoId) {
+                    // Actualizar
+                    response = await fetch(`/api/tramites/${editandoId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(tramite)
+                    });
+                } else {
+                    // Crear
+                    response = await fetch('/api/tramites', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(tramite)
+                    });
+                }
+                
+                const data = await response.json();
+                alert(data.msg);
+                cancelarEdicion();
+                cargarTramites();
+            } catch (error) {
+                alert('Error al guardar el trámite');
+                console.error(error);
+            }
+        });
+
+        // Editar trámite
+        async function editarTramite(id) {
+            try {
+                const response = await fetch(`/api/tramites/${id}`);
+                const tramites = await response.json();
+                const tramite = tramites[0];
+                
+                editandoId = id;
+                document.getElementById('form-title').textContent = 'Editar Trámite';
+                document.getElementById('codigo').value = tramite.CODIGO;
+                document.getElementById('estado').value = tramite.ESTADO;
+                document.getElementById('id_usuario').value = tramite.ID_USUARIO;
+                document.getElementById('id_tipo').value = tramite.ID_TIPO;
+                document.getElementById('id_area').value = tramite.ID_AREA;
+                document.getElementById('btn-submit').textContent = 'Actualizar Trámite';
+                document.getElementById('btn-cancel').style.display = 'inline-block';
+                
+                // Scroll al formulario
+                document.getElementById('form-tramite').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                alert('Error al cargar el trámite');
+                console.error(error);
+            }
+        }
+
+        // Cancelar edición
+        function cancelarEdicion() {
+            editandoId = null;
+            document.getElementById('form-title').textContent = 'Nuevo Trámite';
+            document.getElementById('form-tramite').reset();
+            document.getElementById('btn-submit').textContent = 'Crear Trámite';
+            document.getElementById('btn-cancel').style.display = 'none';
+        }
+
+        // Eliminar trámite
+        async function eliminarTramite(id) {
+            if (confirm('¿Está seguro de eliminar este trámite? También se eliminarán sus movimientos asociados.')) {
+                try {
+                    await fetch(`/api/tramites/${id}`, { method: 'DELETE' });
+                    alert('Trámite eliminado');
+                    cargarTramites();
+                } catch (error) {
+                    alert('Error al eliminar el trámite');
+                    console.error(error);
+                }
+            }
+        }
+
+        // Cargar al inicio
+        cargarCatalogos();
+        cargarTramites();
+    </script>
 </body>
 </html>

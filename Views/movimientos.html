@@ -1,122 +1,421 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Movimientos</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; }
-    h1 { text-align: center; }
-    input, select, button { margin: 5px; padding: 5px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background-color: #f4f4f4; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Movimientos</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        nav {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            margin: 0 5px;
+        }
+        nav a:hover {
+            background-color: #555;
+        }
+        .filters {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .filter-group {
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 10px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+        .stat-card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            flex: 1;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .estado-en-proceso {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        .estado-finalizado {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .estado-pendiente {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .movimiento-arrow {
+            display: inline-block;
+            margin: 0 10px;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-  <h1>Movimientos</h1>
+    <nav>
+        <a href="/usuarios">Usuarios</a>
+        <a href="/tramites">Trámites</a>
+        <a href="/movimientos">Movimientos</a>
+    </nav>
 
-  <h2>Crear/Actualizar Movimiento</h2>
-  <form id="movimientoForm">
-    <input type="hidden" id="idMovimiento">
-    <input type="number" id="idUsuario" placeholder="ID Usuario" required>
-    <select id="tipo" required>
-      <option value="">Seleccionar Tipo</option>
-      <option value="Ingreso">Ingreso</option>
-      <option value="Egreso">Egreso</option>
-    </select>
-    <input type="number" id="monto" placeholder="Monto" required>
-    <button type="submit">Guardar</button>
-  </form>
+    <div class="container">
+        <h1>Consulta de Movimientos de Trámites</h1>
 
-  <h2>Lista de Movimientos</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>ID Usuario</th>
-        <th>Tipo</th>
-        <th>Monto</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody id="movimientosTable"></tbody>
-  </table>
+        <!-- Estadísticas -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-movimientos">0</div>
+                <div class="stat-label">Total Movimientos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-tramites">0</div>
+                <div class="stat-label">Trámites Únicos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-en-proceso">0</div>
+                <div class="stat-label">En Proceso</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-finalizados">0</div>
+                <div class="stat-label">Finalizados</div>
+            </div>
+        </div>
 
-  <script>
-    const apiUrl = '/api/movimientos';
+        <!-- Filtros de búsqueda -->
+        <div class="filters">
+            <h3>Filtros de Búsqueda</h3>
+            
+            <div class="filter-group">
+                <label for="filtro-id-tramite">ID Trámite:</label>
+                <input type="number" id="filtro-id-tramite" placeholder="ID">
+            </div>
 
-    async function listarMovimientos() {
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-      const tbody = document.getElementById('movimientosTable');
-      tbody.innerHTML = '';
-      data.forEach(m => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${m.ID_MOVIMIENTO}</td>
-          <td>${m.ID_USUARIO}</td>
-          <td>${m.TIPO}</td>
-          <td>${m.MONTO}</td>
-          <td>
-            <button onclick="editarMovimiento(${m.ID_MOVIMIENTO}, ${m.ID_USUARIO}, '${m.TIPO}', ${m.MONTO})">Editar</button>
-            <button onclick="eliminarMovimiento(${m.ID_MOVIMIENTO})">Eliminar</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+            <div class="filter-group">
+                <label for="filtro-fecha">Fecha:</label>
+                <input type="date" id="filtro-fecha">
+            </div>
 
-    async function crearMovimiento(movimiento) {
-      await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(movimiento)
-      });
-      listarMovimientos();
-    }
+            <div class="filter-group">
+                <label for="filtro-area-origen">Área Origen:</label>
+                <select id="filtro-area-origen">
+                    <option value="">Todas</option>
+                </select>
+            </div>
 
-    async function actualizarMovimiento(id, movimiento) {
-      await fetch(`${apiUrl}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(movimiento)
-      });
-      listarMovimientos();
-    }
+            <div class="filter-group">
+                <label for="filtro-area-destino">Área Destino:</label>
+                <select id="filtro-area-destino">
+                    <option value="">Todas</option>
+                </select>
+            </div>
 
-    async function eliminarMovimiento(id) {
-      if(confirm('¿Seguro que deseas eliminar este movimiento?')) {
-        await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
-        listarMovimientos();
-      }
-    }
+            <br>
+            <button onclick="buscarMovimientos()">Buscar</button>
+            <button onclick="limpiarFiltros()" style="background-color: #757575;">Limpiar Filtros</button>
+            <button onclick="exportarCSV()" style="background-color: #2196F3;">Exportar CSV</button>
+        </div>
 
-    function editarMovimiento(id, idUsuario, tipo, monto) {
-      document.getElementById('idMovimiento').value = id;
-      document.getElementById('idUsuario').value = idUsuario;
-      document.getElementById('tipo').value = tipo;
-      document.getElementById('monto').value = monto;
-    }
+        <!-- Tabla de movimientos -->
+        <h2>Resultados</h2>
+        <table id="tabla-movimientos">
+            <thead>
+                <tr>
+                    <th>ID Movimiento</th>
+                    <th>ID Trámite</th>
+                    <th>Código Trámite</th>
+                    <th>Fecha/Hora Registro</th>
+                    <th>Usuario</th>
+                    <th>Flujo de Áreas</th>
+                    <th>Estado</th>
+                    <th>Observación</th>
+                </tr>
+            </thead>
+            <tbody id="movimientos-body">
+            </tbody>
+        </table>
+    </div>
 
-    document.getElementById('movimientoForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const id = document.getElementById('idMovimiento').value;
-      const movimiento = {
-        id_usuario: parseInt(document.getElementById('idUsuario').value),
-        tipo: document.getElementById('tipo').value,
-        monto: parseFloat(document.getElementById('monto').value)
-      };
-      if(id) {
-        actualizarMovimiento(id, movimiento);
-      } else {
-        crearMovimiento(movimiento);
-      }
-      e.target.reset();
-      document.getElementById('idMovimiento').value = '';
-    });
+    <script>
+        let movimientosData = [];
 
-    // Listar movimientos al cargar la página
-    listarMovimientos();
-  </script>
+        // Cargar áreas para los filtros
+        async function cargarAreas() {
+            try {
+                const response = await fetch('/api/movimientos/catalogo/areas');
+                const areas = await response.json();
+                
+                const selectOrigen = document.getElementById('filtro-area-origen');
+                const selectDestino = document.getElementById('filtro-area-destino');
+                
+                const opcionesHTML = areas.map(a => 
+                    `<option value="${a.ID_AREA}">${a.NOMBRE_AREA}</option>`
+                ).join('');
+                
+                selectOrigen.innerHTML = '<option value="">Todas</option>' + opcionesHTML;
+                selectDestino.innerHTML = '<option value="">Todas</option>' + opcionesHTML;
+            } catch (error) {
+                console.error('Error al cargar áreas:', error);
+            }
+        }
+
+        // Cargar todos los movimientos
+        async function cargarMovimientos() {
+            try {
+                const response = await fetch('/api/movimientos');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                movimientosData = await response.json();
+                console.log('Movimientos cargados:', movimientosData); // Debug
+                mostrarMovimientos(movimientosData);
+                actualizarEstadisticas(movimientosData);
+            } catch (error) {
+                console.error('Error al cargar movimientos:', error);
+                document.getElementById('movimientos-body').innerHTML = 
+                    '<tr><td colspan="8" style="text-align:center; color: red;">Error al cargar movimientos. Por favor, verifica la consola.</td></tr>';
+            }
+        }
+
+        // Mostrar movimientos en la tabla
+        function mostrarMovimientos(movimientos) {
+            const tbody = document.getElementById('movimientos-body');
+            
+            if (movimientos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center">No se encontraron movimientos</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = movimientos.map(m => {
+                const fecha = new Date(m.FECHA_REGISTRO);
+                const fechaStr = fecha.toLocaleDateString('es-PE');
+                const horaStr = fecha.toLocaleTimeString('es-PE');
+                const estadoClass = m.ESTADO_TRAMITE.toLowerCase().replace(' ', '-');
+                
+                return `
+                    <tr>
+                        <td>${m.ID_MOVIMIENTO}</td>
+                        <td><strong>${m.ID_TRAMITE}</strong></td>
+                        <td>${m.CODIGO_TRAMITE}</td>
+                        <td>${fechaStr}<br><small>${horaStr}</small></td>
+                        <td>${m.USUARIO}</td>
+                        <td>
+                            ${m.AREA_ORIGEN}
+                            <span class="movimiento-arrow">→</span>
+                            ${m.AREA_DESTINO}
+                        </td>
+                        <td class="estado-${estadoClass}">${m.ESTADO_TRAMITE}</td>
+                        <td>${m.OBSERVACION || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Actualizar estadísticas
+        function actualizarEstadisticas(movimientos) {
+            document.getElementById('total-movimientos').textContent = movimientos.length;
+            
+            // Contar trámites únicos
+            const tramitesUnicos = new Set(movimientos.map(m => m.ID_TRAMITE)).size;
+            document.getElementById('total-tramites').textContent = tramitesUnicos;
+            
+            // Contar por estado
+            const enProceso = movimientos.filter(m => m.ESTADO_TRAMITE === 'En proceso').length;
+            const finalizados = movimientos.filter(m => m.ESTADO_TRAMITE === 'Finalizado').length;
+            
+            document.getElementById('total-en-proceso').textContent = enProceso;
+            document.getElementById('total-finalizados').textContent = finalizados;
+        }
+
+        // Buscar movimientos con filtros
+        async function buscarMovimientos() {
+            const idTramite = document.getElementById('filtro-id-tramite').value.trim();
+            const fecha = document.getElementById('filtro-fecha').value;
+            const areaOrigen = document.getElementById('filtro-area-origen').value;
+            const areaDestino = document.getElementById('filtro-area-destino').value;
+
+            // Si no hay filtros, cargar todos
+            if (!idTramite && !fecha && !areaOrigen && !areaDestino) {
+                cargarMovimientos();
+                return;
+            }
+
+            let url = '/api/movimientos';
+
+            try {
+                // Prioridad: buscar por ID de trámite si está presente
+                if (idTramite) {
+                    url = `/api/movimientos/tramite/${idTramite}`;
+                }
+                // Buscar por fecha
+                else if (fecha) {
+                    url = `/api/movimientos/fecha/${fecha}`;
+                }
+                // Buscar por área origen
+                else if (areaOrigen) {
+                    url = `/api/movimientos/area-origen/${areaOrigen}`;
+                }
+                // Buscar por área destino
+                else if (areaDestino) {
+                    url = `/api/movimientos/area-destino/${areaDestino}`;
+                }
+
+                console.log('Buscando en:', url); // Debug
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                let movimientos = await response.json();
+                
+                console.log('Resultados de búsqueda:', movimientos); // Debug
+                
+                // Aplicar filtros adicionales si es necesario
+                if (movimientos.length > 0 && !idTramite) {
+                    if (fecha && (areaOrigen || areaDestino)) {
+                        if (areaOrigen) {
+                            movimientos = movimientos.filter(m => m.ID_AREA_ORIGEN == areaOrigen);
+                        }
+                        if (areaDestino) {
+                            movimientos = movimientos.filter(m => m.ID_AREA_DESTINO == areaDestino);
+                        }
+                    }
+                }
+
+                mostrarMovimientos(movimientos);
+                actualizarEstadisticas(movimientos);
+            } catch (error) {
+                console.error('Error al buscar movimientos:', error);
+                alert('Error al buscar movimientos. Verifica que el ID de trámite exista.');
+            }
+        }
+
+        // Limpiar filtros
+        function limpiarFiltros() {
+            document.getElementById('filtro-id-tramite').value = '';
+            document.getElementById('filtro-fecha').value = '';
+            document.getElementById('filtro-area-origen').value = '';
+            document.getElementById('filtro-area-destino').value = '';
+            cargarMovimientos();
+        }
+
+        // Exportar a CSV
+        function exportarCSV() {
+            if (movimientosData.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+
+            const headers = ['ID_Movimiento', 'ID_Tramite', 'Codigo_Tramite', 'Fecha', 'Hora', 'Usuario', 'Area_Origen', 'Area_Destino', 'Estado', 'Observacion'];
+            
+            const rows = movimientosData.map(m => {
+                const fecha = new Date(m.FECHA_REGISTRO);
+                return [
+                    m.ID_MOVIMIENTO,
+                    m.ID_TRAMITE,
+                    m.CODIGO_TRAMITE,
+                    fecha.toLocaleDateString('es-PE'),
+                    fecha.toLocaleTimeString('es-PE'),
+                    m.USUARIO,
+                    m.AREA_ORIGEN,
+                    m.AREA_DESTINO,
+                    m.ESTADO_TRAMITE,
+                    m.OBSERVACION || ''
+                ].map(value => `"${value}"`).join(',');
+            });
+
+            const csv = [headers.join(','), ...rows].join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `movimientos_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Cargar al inicio
+        cargarAreas();
+        cargarMovimientos();
+    </script>
 </body>
 </html>

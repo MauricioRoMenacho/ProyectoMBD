@@ -1,24 +1,160 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const { executeQuery } = require('../db');
 
-// GET: listar movimientos
+// GET: listar todos los movimientos con información completa
 router.get('/', async (req, res) => {
   try {
-    const result = await db.open(`SELECT * FROM MOVIMIENTOS`);
+    const result = await executeQuery(`
+      SELECT 
+        m.ID_MOVIMIENTO,
+        m.OBSERVACION,
+        m.ID_TRAMITE,
+        m.ID_AREA_ORIGEN,
+        m.ID_AREA_DESTINO,
+        t.CODIGO AS CODIGO_TRAMITE,
+        t.ESTADO AS ESTADO_TRAMITE,
+        t.FECHA_REGISTRO,
+        u.NOMBRE || ' ' || u.APELLIDO AS USUARIO,
+        a_origen.NOMBRE_AREA AS AREA_ORIGEN,
+        a_destino.NOMBRE_AREA AS AREA_DESTINO
+      FROM MOVIMIENTO m
+      JOIN TRAMITE t ON m.ID_TRAMITE = t.ID_TRAMITE
+      JOIN USUARIOS u ON t.ID_USUARIO = u.ID_USUARIO
+      JOIN AREA a_origen ON m.ID_AREA_ORIGEN = a_origen.ID_AREA
+      JOIN AREA a_destino ON m.ID_AREA_DESTINO = a_destino.ID_AREA
+      ORDER BY t.FECHA_REGISTRO DESC
+    `);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET: movimiento por ID
-router.get('/:id', async (req, res) => {
+// GET: movimientos por ID de trámite
+router.get('/tramite/:id', async (req, res) => {
   try {
-    const result = await db.open(
-      `SELECT * FROM MOVIMIENTOS WHERE ID_MOVIMIENTO = :id`,
-      [req.params.id]
-    );
+    const result = await executeQuery(`
+      SELECT 
+        m.ID_MOVIMIENTO,
+        m.OBSERVACION,
+        m.ID_TRAMITE,
+        m.ID_AREA_ORIGEN,
+        m.ID_AREA_DESTINO,
+        t.CODIGO AS CODIGO_TRAMITE,
+        t.ESTADO AS ESTADO_TRAMITE,
+        t.FECHA_REGISTRO,
+        u.NOMBRE || ' ' || u.APELLIDO AS USUARIO,
+        a_origen.NOMBRE_AREA AS AREA_ORIGEN,
+        a_destino.NOMBRE_AREA AS AREA_DESTINO
+      FROM MOVIMIENTO m
+      JOIN TRAMITE t ON m.ID_TRAMITE = t.ID_TRAMITE
+      JOIN USUARIOS u ON t.ID_USUARIO = u.ID_USUARIO
+      JOIN AREA a_origen ON m.ID_AREA_ORIGEN = a_origen.ID_AREA
+      JOIN AREA a_destino ON m.ID_AREA_DESTINO = a_destino.ID_AREA
+      WHERE m.ID_TRAMITE = :id
+      ORDER BY m.ID_MOVIMIENTO
+    `, [req.params.id]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET: movimientos por fecha
+router.get('/fecha/:fecha', async (req, res) => {
+  try {
+    const result = await executeQuery(`
+      SELECT 
+        m.ID_MOVIMIENTO,
+        m.OBSERVACION,
+        m.ID_TRAMITE,
+        m.ID_AREA_ORIGEN,
+        m.ID_AREA_DESTINO,
+        t.CODIGO AS CODIGO_TRAMITE,
+        t.ESTADO AS ESTADO_TRAMITE,
+        t.FECHA_REGISTRO,
+        u.NOMBRE || ' ' || u.APELLIDO AS USUARIO,
+        a_origen.NOMBRE_AREA AS AREA_ORIGEN,
+        a_destino.NOMBRE_AREA AS AREA_DESTINO
+      FROM MOVIMIENTO m
+      JOIN TRAMITE t ON m.ID_TRAMITE = t.ID_TRAMITE
+      JOIN USUARIOS u ON t.ID_USUARIO = u.ID_USUARIO
+      JOIN AREA a_origen ON m.ID_AREA_ORIGEN = a_origen.ID_AREA
+      JOIN AREA a_destino ON m.ID_AREA_DESTINO = a_destino.ID_AREA
+      WHERE TRUNC(t.FECHA_REGISTRO) = TO_DATE(:fecha, 'YYYY-MM-DD')
+      ORDER BY t.FECHA_REGISTRO DESC
+    `, [req.params.fecha]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET: movimientos por área origen
+router.get('/area-origen/:id', async (req, res) => {
+  try {
+    const result = await executeQuery(`
+      SELECT 
+        m.ID_MOVIMIENTO,
+        m.OBSERVACION,
+        m.ID_TRAMITE,
+        m.ID_AREA_ORIGEN,
+        m.ID_AREA_DESTINO,
+        t.CODIGO AS CODIGO_TRAMITE,
+        t.ESTADO AS ESTADO_TRAMITE,
+        t.FECHA_REGISTRO,
+        u.NOMBRE || ' ' || u.APELLIDO AS USUARIO,
+        a_origen.NOMBRE_AREA AS AREA_ORIGEN,
+        a_destino.NOMBRE_AREA AS AREA_DESTINO
+      FROM MOVIMIENTO m
+      JOIN TRAMITE t ON m.ID_TRAMITE = t.ID_TRAMITE
+      JOIN USUARIOS u ON t.ID_USUARIO = u.ID_USUARIO
+      JOIN AREA a_origen ON m.ID_AREA_ORIGEN = a_origen.ID_AREA
+      JOIN AREA a_destino ON m.ID_AREA_DESTINO = a_destino.ID_AREA
+      WHERE m.ID_AREA_ORIGEN = :id
+      ORDER BY t.FECHA_REGISTRO DESC
+    `, [req.params.id]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET: movimientos por área destino
+router.get('/area-destino/:id', async (req, res) => {
+  try {
+    const result = await executeQuery(`
+      SELECT 
+        m.ID_MOVIMIENTO,
+        m.OBSERVACION,
+        m.ID_TRAMITE,
+        m.ID_AREA_ORIGEN,
+        m.ID_AREA_DESTINO,
+        t.CODIGO AS CODIGO_TRAMITE,
+        t.ESTADO AS ESTADO_TRAMITE,
+        t.FECHA_REGISTRO,
+        u.NOMBRE || ' ' || u.APELLIDO AS USUARIO,
+        a_origen.NOMBRE_AREA AS AREA_ORIGEN,
+        a_destino.NOMBRE_AREA AS AREA_DESTINO
+      FROM MOVIMIENTO m
+      JOIN TRAMITE t ON m.ID_TRAMITE = t.ID_TRAMITE
+      JOIN USUARIOS u ON t.ID_USUARIO = u.ID_USUARIO
+      JOIN AREA a_origen ON m.ID_AREA_ORIGEN = a_origen.ID_AREA
+      JOIN AREA a_destino ON m.ID_AREA_DESTINO = a_destino.ID_AREA
+      WHERE m.ID_AREA_DESTINO = :id
+      ORDER BY t.FECHA_REGISTRO DESC
+    `, [req.params.id]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET: obtener áreas para filtros
+router.get('/catalogo/areas', async (req, res) => {
+  try {
+    const result = await executeQuery(`SELECT * FROM AREA ORDER BY NOMBRE_AREA`);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -27,34 +163,20 @@ router.get('/:id', async (req, res) => {
 
 // POST: crear movimiento
 router.post('/', async (req, res) => {
-  const { id_usuario, tipo, monto } = req.body;
+  const { observacion, id_tramite, id_area_origen, id_area_destino } = req.body;
 
   try {
-    await db.open(
-      `INSERT INTO MOVIMIENTOS (ID_USUARIO, TIPO, MONTO)
-       VALUES (:id_usuario, :tipo, :monto)`,
-      [id_usuario, tipo, monto],
+    // Obtener el siguiente ID
+    const maxIdResult = await executeQuery(`SELECT NVL(MAX(ID_MOVIMIENTO), 0) + 1 AS NEXT_ID FROM MOVIMIENTO`);
+    const nextId = maxIdResult.rows[0].NEXT_ID;
+
+    await executeQuery(
+      `INSERT INTO MOVIMIENTO (ID_MOVIMIENTO, OBSERVACION, ID_TRAMITE, ID_AREA_ORIGEN, ID_AREA_DESTINO) 
+       VALUES (:id, :observacion, :id_tramite, :id_area_origen, :id_area_destino)`,
+      [nextId, observacion, id_tramite, id_area_origen, id_area_destino],
       true
     );
-    res.json({ msg: 'Movimiento creado' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// PUT: actualizar movimiento
-router.put('/:id', async (req, res) => {
-  const { tipo, monto } = req.body;
-
-  try {
-    await db.open(
-      `UPDATE MOVIMIENTOS
-       SET TIPO = :tipo, MONTO = :monto
-       WHERE ID_MOVIMIENTO = :id`,
-      [tipo, monto, req.params.id],
-      true
-    );
-    res.json({ msg: 'Movimiento actualizado' });
+    res.json({ msg: 'Movimiento registrado exitosamente', id: nextId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -63,8 +185,8 @@ router.put('/:id', async (req, res) => {
 // DELETE: eliminar movimiento
 router.delete('/:id', async (req, res) => {
   try {
-    await db.open(
-      `DELETE FROM MOVIMIENTOS WHERE ID_MOVIMIENTO = :id`,
+    await executeQuery(
+      `DELETE FROM MOVIMIENTO WHERE ID_MOVIMIENTO = :id`,
       [req.params.id],
       true
     );
@@ -75,4 +197,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-
