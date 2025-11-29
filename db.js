@@ -1,6 +1,6 @@
 const oracledb = require('oracledb');
 
-// Configuración para Oracle
+
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 
 async function connectDB() {
@@ -16,7 +16,7 @@ async function connectDB() {
   }
 }
 
-// Función auxiliar para ejecutar queries
+
 async function executeQuery(sql, params = [], autoCommit = false) {
   let connection;
   try {
