@@ -4,18 +4,92 @@
 <meta charset="UTF-8">
 <title>Usuarios</title>
 <style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
   body {
     font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 0;
-    padding: 20px;
     background-color: #f5f5f5;
   }
 
-  h1, h2 {
+  .header {
+    background-color: #4CAF50;
+    color: white;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 15px;
+  }
+
+  .nav-links a {
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: all 0.3s;
+    font-weight: bold;
+    background-color: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.3);
+  }
+
+  .nav-links a:hover {
+    background-color: rgba(255,255,255,0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+
+  .nav-links a.active {
+    background-color: #45a049;
+    border-color: white;
+    cursor: default;
+  }
+
+  #userInfo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #userInfo button {
+    background-color: #45a049;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 14px;
+  }
+
+  #userInfo button:hover {
+    background-color: #3d8b40;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  h2 {
     text-align: center;
+    color: #333;
+    margin-bottom: 20px;
   }
 
   form {
@@ -30,29 +104,57 @@
     gap: 10px;
   }
 
-  input, select, button {
-    padding: 8px;
+  input, select {
+    padding: 10px;
     border-radius: 5px;
     border: 1px solid #ccc;
     font-size: 14px;
   }
 
   button {
-    background-color: #4CAF50;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
     color: white;
     border: none;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.3s;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: bold;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   button:hover {
-    background-color: #45a049;
+    background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+  }
+
+  button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  form button {
+    margin-top: 10px;
+  }
+
+  td button {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+
+  td button:hover {
+    background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
   }
 
   table {
     border-collapse: collapse;
     width: 80%;
-    max-width: 800px;
+    max-width: 900px;
     background-color: #fff;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     border-radius: 10px;
@@ -69,50 +171,61 @@
     background-color: #4CAF50;
     color: white;
   }
-
-  td button {
-    background-color: #f44336;
-    padding: 5px 10px;
-  }
-
-  td button:hover {
-    background-color: #d32f2f;
-  }
 </style>
 </head>
 <body>
 
-<h1>Gestión de Usuarios</h1>
+<div class="header">
+  <h1>Sistema de Gestión de Trámites</h1>
+  <div class="nav-links">
+    <a href="/">Inicio</a>
+    <a href="/tramites">Trámites</a>
+    <a href="/movimientos">Movimientos</a>
+  </div>
+  <div id="userInfo"></div>
+</div>
 
-<h2>Agregar Usuario</h2>
-<form id="formAgregar">
-  <input type="text" name="nombre" placeholder="Nombre" required>
-  <input type="text" name="apellido" placeholder="Apellido" required>
-  <input type="email" name="correo" placeholder="Correo" required>
-  <select name="rol" required>
-    <option value="">Selecciona rol</option>
-    <option value="Usuario">Usuario</option>
-    <option value="Administrador">Administrador</option>
-  </select>
-  <button type="submit">Agregar</button>
-</form>
+<div class="container">
+  <h2>Gestión de Usuarios</h2>
 
-<h2>Lista de Usuarios</h2>
-<table id="tablaUsuarios">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Nombre</th>
-      <th>Apellido</th>
-      <th>Correo</th>
-      <th>Rol</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+  <h2>Agregar Usuario</h2>
+  <form id="formAgregar">
+    <input type="text" name="nombre" placeholder="Nombre" required>
+    <input type="text" name="apellido" placeholder="Apellido" required>
+    <input type="email" name="correo" placeholder="Correo" required>
+    <input type="password" name="password" placeholder="Contraseña" required>
+    <select name="rol" required>
+      <option value="">Selecciona rol</option>
+      <option value="Usuario">Usuario</option>
+      <option value="Administrador">Administrador</option>
+    </select>
+    <button type="submit">Agregar</button>
+  </form>
 
+  <h2>Lista de Usuarios</h2>
+  <table id="tablaUsuarios">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Apellido</th>
+        <th>Correo</th>
+        <th>Rol</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script src="/js/auth.js"></script>
 <script>
+// Verificar autenticación
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    displayUserInfo();
+});
+
 const tabla = document.querySelector("#tablaUsuarios tbody");
 const form = document.getElementById("formAgregar");
 

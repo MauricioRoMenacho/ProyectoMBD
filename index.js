@@ -11,21 +11,28 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'Public')));
 
 // Rutas API
+const authRouter = require('./Routes/auth');  // ← NUEVO: Ruta de autenticación
 const usuariosRouter = require('./Routes/usuarios');
 const tramitesRouter = require('./Routes/tramites');
 const movimientosRouter = require('./Routes/movimientos');
 
+app.use('/api/auth', authRouter);  // ← NUEVO: Agregar ruta de auth
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/tramites', tramitesRouter);
 app.use('/api/movimientos', movimientosRouter);
 
 // Vistas HTML
 
+// ← NUEVO: Ruta de login (debe estar ANTES del dashboard)
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Views/login.html'));
+});
+
+// Dashboard principal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Views/index.html'));
-  });
+});
 
-  
 app.get('/usuarios', (req, res) => {
   res.sendFile(path.join(__dirname, 'Views/usuarios.html'));
 });
@@ -36,10 +43,7 @@ app.get('/tramites', (req, res) => {
 
 app.get('/movimientos', (req, res) => {
     res.sendFile(path.join(__dirname, 'Views/movimientos.html'));
-  });
-  
-
-
+});
 
 app.listen(3000, () => {
   console.log('Servidor corriendo en http://localhost:3000');
